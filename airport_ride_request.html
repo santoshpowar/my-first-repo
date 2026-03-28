@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkyRide — Airport Transfers</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --cream: #f5f0e8;
+    --gold: #c8a95a;
+    --gold-light: #e8d090;
+    --slate: #1c1c2e;
+    --muted: #6b6b80;
+    --border: rgba(200,169,90,0.25);
+    --card: rgba(255,255,255,0.04);
+    --radius: 4px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(200,169,90,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 90% 90%, rgba(200,169,90,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: repeating-linear-gradient(90deg, var(--gold) 0, var(--gold) 40px, transparent 40px, transparent 80px);
+    opacity: 0.4;
+    z-index: 0;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+  }
+
+  .logo { display: flex; align-items: baseline; gap: 0.5rem; }
+  .logo-mark { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.05em; color: var(--gold); line-height: 1; }
+  .logo-sub { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); font-weight: 300; }
+
+  .badge {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--gold); border: 1px solid var(--border);
+    padding: 0.35rem 0.75rem; border-radius: 2rem; font-weight: 500;
+  }
+  .badge::before { content: '●'; font-size: 0.5rem; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .hero { margin-bottom: 2.5rem; }
+  .hero h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem,10vw,5rem); line-height: 0.9; letter-spacing: 0.03em; margin-bottom: 1rem; }
+  .hero h1 span { color: var(--gold); display: block; }
+  .hero p { font-size: 0.9rem; color: var(--muted); font-weight: 300; line-height: 1.7; max-width: 400px; }
+  .coverage-pill {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(200,169,90,0.1); border: 1px solid var(--border); border-radius: 2rem;
+    padding: 0.3rem 0.8rem; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gold-light); margin-top: 1rem; font-weight: 500;
+  }
+
+  .setup-banner {
+    background: rgba(200,169,90,0.08);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .setup-banner .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+  .setup-banner p { font-size: 0.8rem; color: var(--muted); line-height: 1.6; font-weight: 300; }
+  .setup-banner p strong { color: var(--gold); font-weight: 500; }
+  .setup-input-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+  .setup-input-row input {
+    flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 0.5rem 0.75rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--cream);
+    outline: none;
+  }
+  .setup-input-row input:focus { border-color: var(--gold); }
+  .setup-input-row button {
+    background: var(--gold); color: var(--ink); border: none;
+    border-radius: var(--radius); padding: 0.5rem 1rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap;
+  }
+  .setup-input-row button:hover { background: var(--gold-light); }
+  .url-saved { font-size: 0.72rem; color: #7ec8a0; margin-top: 0.4rem; display: none; }
+
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 2rem; }
+  .step { display: flex; align-items: center; gap: 0.5rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; color: var(--muted); transition: color 0.3s; }
+  .step.active { color: var(--gold); }
+  .step.done { color: var(--muted); }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; flex-shrink: 0; transition: all 0.3s; }
+  .step.active .step-num { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+  .step.done .step-num { background: var(--muted); border-color: var(--muted); color: var(--ink); }
+  .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 0.75rem; min-width: 20px; }
+
+  .form-section { display: none; animation: slideIn 0.35s ease; }
+  .form-section.active { display: block; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+  .section-label {
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold);
+    font-weight: 500; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .field { margin-bottom: 1.25rem; }
+  .field label { display: block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; font-weight: 500; }
+  .field label span.req { color: var(--gold); margin-left: 2px; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 0.8rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 300;
+    color: var(--cream); outline: none; transition: border-color 0.2s, background 0.2s; -webkit-appearance: none;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23c8a95a' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 1rem center; cursor: pointer;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); background: rgba(200,169,90,0.05); }
+  .field input::placeholder, .field textarea::placeholder { color: rgba(107,107,128,0.6); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media(max-width:480px){.field-row{grid-template-columns:1fr}}
+
+  .airport-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem; }
+  @media(max-width:480px){.airport-grid{grid-template-columns:1fr}}
+  .airport-card { position: relative; border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; cursor: pointer; transition: all 0.2s; background: var(--card); }
+  .airport-card:hover { border-color: rgba(200,169,90,0.5); background: rgba(200,169,90,0.05); }
+  .airport-card.selected { border-color: var(--gold); background: rgba(200,169,90,0.08); }
+  .airport-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .airport-code { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--gold); letter-spacing: 0.05em; line-height: 1; margin-bottom: 0.25rem; }
+  .airport-name { font-size: 0.78rem; color: var(--cream); font-weight: 400; margin-bottom: 0.2rem; }
+  .airport-dist { font-size: 0.65rem; color: var(--muted); font-weight: 300; }
+  .check-mark { position: absolute; top: 0.75rem; right: 0.75rem; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; transition: all 0.2s; color: transparent; }
+  .airport-card.selected .check-mark { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+
+  .vehicle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+  @media(max-width:480px){.vehicle-grid{grid-template-columns:1fr}}
+  .vehicle-card { position: relative; border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 0.75rem; cursor: pointer; transition: all 0.2s; background: var(--card); text-align: center; }
+  .vehicle-card:hover { border-color: rgba(200,169,90,0.5); }
+  .vehicle-card.selected { border-color: var(--gold); background: rgba(200,169,90,0.08); }
+  .vehicle-card input[type="radio"] { position: absolute; opacity: 0; }
+  .vehicle-icon { font-size: 1.8rem; margin-bottom: 0.4rem; display: block; }
+  .vehicle-type { font-size: 0.75rem; font-weight: 500; color: var(--cream); margin-bottom: 0.15rem; }
+  .vehicle-cap { font-size: 0.65rem; color: var(--muted); font-weight: 300; }
+
+  .info-strip { display: flex; gap: 1.5rem; background: rgba(200,169,90,0.06); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; margin-bottom: 1.5rem; }
+  .info-item { display: flex; flex-direction: column; gap: 0.2rem; }
+  .info-item .il { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .info-item .iv { font-size: 0.85rem; font-weight: 500; color: var(--cream); }
+
+  .btn-row { display: flex; gap: 0.75rem; margin-top: 2rem; }
+  .btn { flex: 1; padding: 0.9rem 1.5rem; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s; }
+  .btn-secondary { background: transparent; color: var(--muted); }
+  .btn-secondary:hover { border-color: var(--muted); color: var(--cream); }
+  .btn-primary { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 600; }
+  .btn-primary:hover { background: var(--gold-light); border-color: var(--gold-light); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(200,169,90,0.25); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .review-block { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.25rem; }
+  .review-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .review-row:last-child { border-bottom: none; }
+  .review-row .rk { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+  .review-row .rv { font-weight: 400; color: var(--cream); text-align: right; max-width: 60%; }
+
+  .success-screen { text-align: center; padding: 3rem 0; }
+  .success-icon { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2rem; animation: successPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+  @keyframes successPop { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+  .success-screen h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; letter-spacing: 0.05em; color: var(--gold); margin-bottom: 0.75rem; }
+  .success-screen p { color: var(--muted); font-size: 0.9rem; font-weight: 300; line-height: 1.7; max-width: 360px; margin: 0 auto 2rem; }
+  .confirmation-num { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.3em; color: var(--cream); background: var(--card); border: 1px solid var(--border); display: inline-block; padding: 0.6rem 1.5rem; border-radius: 2rem; margin-bottom: 1.5rem; }
+
+  .error-msg { color: #e07070; font-size: 0.72rem; margin-top: 0.4rem; display: none; }
+  .field.error input, .field.error select { border-color: #e07070; }
+  .field.error .error-msg { display: block; }
+
+  .submitting-msg { font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 0.75rem; display: none; }
+  .submit-error { font-size: 0.8rem; color: #e07070; text-align: center; margin-top: 0.75rem; display: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="logo">
+      <div class="logo-mark">SkyRide</div>
+      <div class="logo-sub">Airport Transfer Co.</div>
+    </div>
+    <div class="badge">Available Now</div>
+  </header>
+
+  <div class="hero">
+    <h1>Your Ride<span>To The Sky.</span></h1>
+    <p>Premium airport transfers from the Lafayette &amp; surrounding area. On time, every time.</p>
+    <div class="coverage-pill">📍 Serving 10-mile radius · ZIP 80026</div>
+  </div>
+
+  <!-- Google Sheets Setup Banner -->
+  <div class="setup-banner" id="setupBanner">
+    <div class="icon">🔗</div>
+    <div style="flex:1">
+      <p><strong>Connect to Google Sheets</strong> — Paste your Apps Script Web App URL below to start saving bookings directly to your spreadsheet.</p>
+      <div class="setup-input-row">
+        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        <button onclick="saveUrl()">Save URL</button>
+      </div>
+      <div class="url-saved" id="urlSaved">✓ Connected — bookings will be saved to your Google Sheet</div>
+    </div>
+  </div>
+
+  <div class="steps" id="stepIndicator">
+    <div class="step active" id="s1"><div class="step-num">1</div> Trip Details</div>
+    <div class="step-line"></div>
+    <div class="step" id="s2"><div class="step-num">2</div> Your Info</div>
+    <div class="step-line"></div>
+    <div class="step" id="s3"><div class="step-num">3</div> Review</div>
+  </div>
+
+  <form id="rideForm" novalidate>
+
+    <!-- STEP 1 -->
+    <div class="form-section active" id="step1">
+      <div class="section-label">Destination Airport</div>
+      <div class="airport-grid">
+        <label class="airport-card selected" id="card-den">
+          <input type="radio" name="airport" value="DEN" checked onchange="selectAirport(this)">
+          <div class="check-mark">✓</div>
+          <div class="airport-code">DEN</div>
+          <div class="airport-name">Denver International</div>
+          <div class="airport-dist">~25 mi from Lafayette</div>
+        </label>
+        <label class="airport-card" id="card-bjc">
+          <input type="radio" name="airport" value="BJC" onchange="selectAirport(this)">
+          <div class="check-mark">✓</div>
+          <div class="airport-code">BJC</div>
+          <div class="airport-name">Rocky Mountain Metro</div>
+          <div class="airport-dist">~8 mi from Lafayette</div>
+        </label>
+      </div>
+
+      <div class="section-label">Vehicle Type</div>
+      <div class="vehicle-grid">
+        <label class="vehicle-card selected" id="vc-sedan">
+          <input type="radio" name="vehicle" value="Sedan" checked onchange="selectVehicle(this,'sedan')">
+          <span class="vehicle-icon">🚗</span>
+          <div class="vehicle-type">Sedan</div>
+          <div class="vehicle-cap">1–3 passengers</div>
+        </label>
+        <label class="vehicle-card" id="vc-suv">
+          <input type="radio" name="vehicle" value="SUV" onchange="selectVehicle(this,'suv')">
+          <span class="vehicle-icon">🚙</span>
+          <div class="vehicle-type">SUV</div>
+          <div class="vehicle-cap">1–5 passengers</div>
+        </label>
+        <label class="vehicle-card" id="vc-van">
+          <input type="radio" name="vehicle" value="Van" onchange="selectVehicle(this,'van')">
+          <span class="vehicle-icon">🚐</span>
+          <div class="vehicle-type">Van</div>
+          <div class="vehicle-cap">1–7 passengers</div>
+        </label>
+      </div>
+
+      <div class="field-row">
+        <div class="field" id="f-date">
+          <label>Pickup Date <span class="req">*</span></label>
+          <input type="date" id="pickupDate">
+        </div>
+        <div class="field" id="f-time">
+          <label>Pickup Time <span class="req">*</span></label>
+          <input type="time" id="pickupTime">
+        </div>
+      </div>
+
+      <div class="field" id="f-address">
+        <label>Pickup Address <span class="req">*</span></label>
+        <input type="text" id="pickupAddress" placeholder="Street address in service area">
+        <div class="error-msg">Please enter a pickup address.</div>
+      </div>
+
+      <div class="field-row">
+        <div class="field" id="f-zip">
+          <label>ZIP Code <span class="req">*</span></label>
+          <input type="text" id="pickupZip" placeholder="e.g. 80026" maxlength="5">
+          <div class="error-msg">Must be a valid ZIP in our 10-mile service area.</div>
+        </div>
+        <div class="field">
+          <label>Passengers</label>
+          <select id="passengers">
+            <option value="1">1 passenger</option>
+            <option value="2">2 passengers</option>
+            <option value="3">3 passengers</option>
+            <option value="4">4 passengers</option>
+            <option value="5">5 passengers</option>
+            <option value="6">6 passengers</option>
+            <option value="7">7 passengers</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Luggage / Notes</label>
+        <textarea id="notes" placeholder="e.g. 2 large bags, curbside pickup, early morning flight..."></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary" onclick="goStep(2)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="form-section" id="step2">
+      <div class="section-label">Contact Information</div>
+      <div class="field-row">
+        <div class="field" id="f-fname">
+          <label>First Name <span class="req">*</span></label>
+          <input type="text" id="firstName" placeholder="Jane">
+          <div class="error-msg">Required.</div>
+        </div>
+        <div class="field" id="f-lname">
+          <label>Last Name <span class="req">*</span></label>
+          <input type="text" id="lastName" placeholder="Smith">
+          <div class="error-msg">Required.</div>
+        </div>
+      </div>
+      <div class="field" id="f-email">
+        <label>Email <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="jane@example.com">
+        <div class="error-msg">Please enter a valid email.</div>
+      </div>
+      <div class="field" id="f-phone">
+        <label>Phone <span class="req">*</span></label>
+        <input type="tel" id="phone" placeholder="(303) 555-0100">
+        <div class="error-msg">Please enter a valid phone number.</div>
+      </div>
+      <div class="field">
+        <label>Flight Number (optional)</label>
+        <input type="text" id="flight" placeholder="e.g. UA 2281">
+      </div>
+      <div class="field">
+        <label>Return Pickup Needed?</label>
+        <select id="returnTrip">
+          <option value="no">No — one way only</option>
+          <option value="yes">Yes — I'll need a return ride</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+        <button type="button" class="btn btn-primary" onclick="goStep(3)">Review Booking →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="form-section" id="step3">
+      <div class="section-label">Review Your Booking</div>
+      <div class="review-block" id="reviewBlock"></div>
+      <div class="info-strip">
+        <div class="info-item"><span class="il">Confirmation</span><span class="iv">Sent via email & SMS</span></div>
+        <div class="info-item"><span class="il">Cancellation</span><span class="iv">Free up to 4 hrs prior</span></div>
+        <div class="info-item"><span class="il">Driver</span><span class="iv">Assigned ~24 hrs before</span></div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+        <button type="button" class="btn btn-primary" id="confirmBtn" onclick="submitForm()">Confirm Booking ✈</button>
+      </div>
+      <div class="submitting-msg" id="submittingMsg">Submitting your booking...</div>
+      <div class="submit-error" id="submitError">⚠ Could not save to Google Sheets — check your URL in the setup banner above.</div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="form-section" id="step4">
+      <div class="success-screen">
+        <div class="success-icon">✈</div>
+        <h2>You're Booked!</h2>
+        <p id="successMsg">Your ride is confirmed and saved to our system. Check your email and phone. Your driver will be in touch 24 hours before pickup.</p>
+        <div class="confirmation-num" id="confNum">SKY-000000</div>
+        <div class="btn-row" style="justify-content:center;">
+          <button type="button" class="btn btn-primary" onclick="resetForm()" style="flex:0;padding:0.9rem 2rem;">Book Another Ride</button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('pickupDate').min = today;
+  document.getElementById('pickupDate').value = today;
+
+  const serviceZips = [
+    '80026','80027','80516','80301','80302','80303','80304',
+    '80305','80306','80307','80308','80309','80310','80023',
+    '80025','80455','80466','80503','80504','80513','80544',
+    '80020','80021'
+  ];
+
+  let currentStep = 1;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('skyride_sheet_url');
+    if (saved) {
+      document.getElementById('scriptUrl').value = saved;
+      document.getElementById('urlSaved').style.display = 'block';
+    }
+  });
+
+  function saveUrl() {
+    const url = document.getElementById('scriptUrl').value.trim();
+    if (!url.startsWith('https://script.google.com')) {
+      alert('Please paste a valid Google Apps Script Web App URL.');
+      return;
+    }
+    localStorage.setItem('skyride_sheet_url', url);
+    document.getElementById('urlSaved').style.display = 'block';
+  }
+
+  function goStep(n) {
+    if (n > currentStep && !validateStep(currentStep)) return;
+    currentStep = n;
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+    for (let i = 1; i <= 3; i++) {
+      const el = document.getElementById('s' + i);
+      el.classList.remove('active','done');
+      if (i < n) el.classList.add('done');
+      else if (i === n) el.classList.add('active');
+    }
+    if (n === 3) buildReview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function validateStep(step) {
+    let ok = true;
+    if (step === 1) {
+      const date = document.getElementById('pickupDate').value;
+      document.getElementById('f-date').classList.toggle('error', !date);
+      if (!date) ok = false;
+
+      const addr = document.getElementById('pickupAddress').value.trim();
+      document.getElementById('f-address').classList.toggle('error', !addr);
+      if (!addr) ok = false;
+
+      const zip = document.getElementById('pickupZip').value.trim();
+      const validZip = serviceZips.includes(zip);
+      document.getElementById('f-zip').classList.toggle('error', !validZip);
+      if (!validZip) ok = false;
+    }
+    if (step === 2) {
+      const fname = document.getElementById('firstName').value.trim();
+      document.getElementById('f-fname').classList.toggle('error', !fname);
+      if (!fname) ok = false;
+
+      const lname = document.getElementById('lastName').value.trim();
+      document.getElementById('f-lname').classList.toggle('error', !lname);
+      if (!lname) ok = false;
+
+      const email = document.getElementById('email').value.trim();
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      document.getElementById('f-email').classList.toggle('error', !emailOk);
+      if (!emailOk) ok = false;
+
+      const phone = document.getElementById('phone').value.trim();
+      document.getElementById('f-phone').classList.toggle('error', phone.length < 10);
+      if (phone.length < 10) ok = false;
+    }
+    return ok;
+  }
+
+  function selectAirport(radio) {
+    document.querySelectorAll('.airport-card').forEach(c => c.classList.remove('selected'));
+    radio.closest('.airport-card').classList.add('selected');
+  }
+
+  function selectVehicle(radio, id) {
+    document.querySelectorAll('.vehicle-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('vc-' + id).classList.add('selected');
+  }
+
+  function getFormData() {
+    return {
+      airport: document.querySelector('input[name="airport"]:checked')?.value,
+      vehicle: document.querySelector('input[name="vehicle"]:checked')?.value,
+      pickupDate: document.getElementById('pickupDate').value,
+      pickupTime: document.getElementById('pickupTime').value,
+      pickupAddress: document.getElementById('pickupAddress').value,
+      pickupZip: document.getElementById('pickupZip').value,
+      passengers: document.getElementById('passengers').value,
+      firstName: document.getElementById('firstName').value,
+      lastName: document.getElementById('lastName').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      flight: document.getElementById('flight').value || '—',
+      returnTrip: document.getElementById('returnTrip').value === 'yes' ? 'Yes' : 'No',
+      notes: document.getElementById('notes').value || '—'
+    };
+  }
+
+  function buildReview() {
+    const d = getFormData();
+    const fmt = v => {
+      if (!v) return '—';
+      const dt = new Date(v + 'T12:00:00');
+      return dt.toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+    };
+    const fmtTime = t => {
+      if (!t) return '—';
+      const [h,m] = t.split(':'); const hr = parseInt(h);
+      return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`;
+    };
+    const rows = [
+      ['Airport', d.airport==='DEN'?'DEN — Denver International':'BJC — Rocky Mountain Metro'],
+      ['Vehicle', d.vehicle],
+      ['Pickup Date', fmt(d.pickupDate)],
+      ['Pickup Time', fmtTime(d.pickupTime)],
+      ['Address', `${d.pickupAddress}, ${d.pickupZip}`],
+      ['Passengers', d.passengers],
+      ['Passenger', `${d.firstName} ${d.lastName}`],
+      ['Email', d.email],
+      ['Phone', d.phone],
+      ['Flight #', d.flight],
+      ['Return Ride', d.returnTrip],
+      ['Notes', d.notes],
+    ];
+    document.getElementById('reviewBlock').innerHTML = rows.map(([k,v])=>
+      `<div class="review-row"><span class="rk">${k}</span><span class="rv">${v}</span></div>`
+    ).join('');
+  }
+
+  async function submitForm() {
+    const conf = 'SKY-' + Math.random().toString(36).substr(2,6).toUpperCase();
+    const data = { ...getFormData(), confirmationNumber: conf };
+    const scriptUrl = localStorage.getItem('skyride_sheet_url');
+
+    const btn = document.getElementById('confirmBtn');
+    const submittingMsg = document.getElementById('submittingMsg');
+    const submitError = document.getElementById('submitError');
+
+    btn.disabled = true;
+    submittingMsg.style.display = 'block';
+    submitError.style.display = 'none';
+
+    let savedToSheets = false;
+
+    if (scriptUrl) {
+      try {
+        await fetch(scriptUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        savedToSheets = true;
+      } catch(err) {
+        console.error('Sheets error:', err);
+      }
+    }
+
+    btn.disabled = false;
+    submittingMsg.style.display = 'none';
+
+    if (!savedToSheets && scriptUrl) {
+      submitError.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('confNum').textContent = conf;
+    document.getElementById('successMsg').textContent = savedToSheets
+      ? 'Your ride is confirmed and saved to our system. Check your email and phone. Your driver will be in touch 24 hours before pickup.'
+      : 'Your ride is confirmed! (Tip: connect Google Sheets in the banner above to save all bookings.)';
+
+    document.getElementById('stepIndicator').style.display = 'none';
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('step4').classList.add('active');
+  }
+
+  function resetForm() {
+    document.getElementById('rideForm').reset();
+    document.getElementById('stepIndicator').style.display = 'flex';
+    document.getElementById('pickupDate').value = today;
+    currentStep = 1;
+    document.querySelectorAll('.airport-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('card-den').classList.add('selected');
+    document.querySelectorAll('.vehicle-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('vc-sedan').classList.add('selected');
+    goStep(1);
+  }
+</script>
+</body>
+</html>
